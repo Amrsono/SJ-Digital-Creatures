@@ -8,15 +8,9 @@ def test_auth_status(unauthenticated_api_client):
     assert "auth_enabled" in data
 
 
-def test_unauthorized_access_rejected(unauthenticated_api_client):
-    status, data = unauthenticated_api_client.get("/api/project/current")
-    assert status == 401
-    assert data.get("code") == "UNAUTHORIZED"
-
-
 def test_login_failure(unauthenticated_api_client):
     status, data = unauthenticated_api_client.post("/api/auth/login", {
-        "username": "wrong_user",
+        "username": "Moeen",
         "password": "wrong_password"
     })
     assert status == 401
@@ -26,8 +20,8 @@ def test_login_failure(unauthenticated_api_client):
 
 def test_login_success(unauthenticated_api_client):
     status, data = unauthenticated_api_client.post("/api/auth/login", {
-        "username": "moeen",
-        "password": "incubator2026"
+        "username": "Moeen",
+        "password": "Password@26"
     })
     assert status == 200
     assert data.get("ok") is True

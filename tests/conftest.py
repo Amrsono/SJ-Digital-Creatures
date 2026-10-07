@@ -38,12 +38,13 @@ class TestApiClient:
         self.base_url = base_url
         self.token = token
 
-    def authenticate(self, username="moeen", password="incubator2026"):
+    def authenticate(self, username="moeen", password="Password@26"):
         status, data = self.post("/api/auth/login", {"username": username, "password": password})
         if status == 200 and isinstance(data, dict) and data.get("token"):
             self.token = data["token"]
             return True
         return False
+
 
     def get(self, endpoint):
         url = f"{self.base_url}{endpoint}"

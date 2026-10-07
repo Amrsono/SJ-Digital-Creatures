@@ -20,11 +20,17 @@ DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 # ─────────────────────────────────────────────
 AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "true").lower() in ("true", "1", "yes")
 VALID_USERS = {
-    os.environ.get("INCUBATOR_USER", "moeen"): os.environ.get("INCUBATOR_PASSWORD", "incubator2026"),
-    "sono": os.environ.get("SONO_PASSWORD", "incubator2026"),
-    "admin": os.environ.get("ADMIN_PASSWORD", "incubator2026")
+    "moeen": os.environ.get("MOEEN_PASSWORD", "Password@26"),
+    "sono": os.environ.get("SONO_PASSWORD", "Password@26"),
+    "admin": os.environ.get("ADMIN_PASSWORD", "Password@26")
 }
 ACTIVE_SESSIONS = {}  # token -> {"user": username, "created_at": float}
+
+def is_tunnel_connection(handler):
+    host = handler.headers.get("Host", "").lower().split(":")[0]
+    is_cf = bool(handler.headers.get("Cf-Ray") or handler.headers.get("Cf-Connecting-Ip") or "trycloudflare.com" in host or "cloudflare" in host)
+    is_remote_host = host not in ("localhost", "127.0.0.1", "0.0.0.0", "::1", "")
+    return is_cf or is_remote_host
 
 def is_authenticated(handler):
     if not AUTH_ENABLED:
@@ -48,7 +54,13 @@ def is_authenticated(handler):
             
     if token and token in ACTIVE_SESSIONS:
         return True, ACTIVE_SESSIONS[token]["user"]
+
+    # When accessed directly on localhost (not through tunnel), allow local developer bypass
+    if not is_tunnel_connection(handler):
+        return True, "sono (local)"
+
     return False, None
+
 
 scanner = ProjectScanner()
 CURRENT_PROJECT_DATA = None
@@ -2624,13 +2636,16 @@ class IncubatorHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         
         if parsed.path == "/api/auth/status":
+            is_tunnel = is_tunnel_connection(self)
             auth_ok, username = is_authenticated(self)
             self.send_json({
                 "authenticated": auth_ok,
                 "user": username,
-                "auth_enabled": AUTH_ENABLED
+                "auth_enabled": AUTH_ENABLED,
+                "is_tunnel": is_tunnel
             })
             return
+
 
         # Auth Guard for API endpoints
         if parsed.path.startswith("/api/"):

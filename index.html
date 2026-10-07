@@ -2672,13 +2672,13 @@
 <body>
 
 <!-- SJ Incubator Remote Authentication Modal -->
-<div id="auth-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,14,26,0.94); backdrop-filter:blur(16px); z-index:999999; align-items:center; justify-content:center;">
-  <div style="background:rgba(21,27,45,0.96); border:1px solid rgba(255,255,255,0.12); box-shadow:0 25px 50px -12px rgba(0,0,0,0.8); border-radius:16px; padding:36px; width:90%; max-width:400px; color:#f8fafc; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-      <img src="sj_logo_mark.png" alt="SJ Logo" style="width:42px; height:42px; border-radius:10px;" />
+<div id="auth-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(7,11,20,0.95); backdrop-filter:blur(20px); z-index:1000000; align-items:center; justify-content:center;">
+  <div style="background:rgba(17,24,39,0.98); border:1px solid rgba(56,189,248,0.25); box-shadow:0 30px 60px -12px rgba(0,0,0,0.9), 0 0 40px rgba(56,189,248,0.1); border-radius:18px; padding:38px 34px; width:92%; max-width:410px; color:#f8fafc; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:22px;">
+      <img src="sj_logo_mark.png" alt="SJ Logo" style="width:46px; height:46px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.5);" />
       <div>
         <div style="font-size:18px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;">SJ Incubator Remote Portal</div>
-        <div style="font-size:12px; color:#94a3b8;">Authentication required for remote access</div>
+        <div style="font-size:12px; color:#38bdf8; font-weight:500;">Secure Cloudflare Tunnel &bull; Moeen</div>
       </div>
     </div>
     
@@ -2686,21 +2686,26 @@
 
     <form onsubmit="handleAuthLogin(event)">
       <div style="margin-bottom:16px;">
-        <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#cbd5e1; margin-bottom:6px;">Username</label>
-        <input type="text" id="auth-username" required placeholder="e.g. moeen or sono" style="width:100%; background:#0f172a; border:1px solid #334155; color:#ffffff; font-size:14px; padding:10px 14px; border-radius:8px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='#334155'" />
+        <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#94a3b8; margin-bottom:6px;">Executive Username</label>
+        <input type="text" id="auth-username" required value="Moeen" style="width:100%; background:#0b1120; border:1px solid #334155; color:#ffffff; font-size:14px; padding:11px 14px; border-radius:9px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='#334155'" />
       </div>
 
-      <div style="margin-bottom:24px;">
-        <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#cbd5e1; margin-bottom:6px;">Password</label>
-        <input type="password" id="auth-password" required placeholder="••••••••" style="width:100%; background:#0f172a; border:1px solid #334155; color:#ffffff; font-size:14px; padding:10px 14px; border-radius:8px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='#334155'" />
+      <div style="margin-bottom:22px;">
+        <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#94a3b8; margin-bottom:6px;">Access Password</label>
+        <input type="password" id="auth-password" required placeholder="Enter password" style="width:100%; background:#0b1120; border:1px solid #334155; color:#ffffff; font-size:14px; padding:11px 14px; border-radius:9px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='#334155'" />
       </div>
 
-      <button type="submit" id="auth-submit-btn" style="width:100%; background:linear-gradient(135deg, #0284c7, #2563eb); color:#ffffff; font-size:14px; font-weight:600; padding:12px; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 12px rgba(2,132,199,0.3); transition:all 0.2s;">
-        Log In to Incubator &rarr;
+      <button type="submit" id="auth-submit-btn" style="width:100%; background:linear-gradient(135deg, #0284c7, #2563eb); color:#ffffff; font-size:14px; font-weight:600; padding:12px; border:none; border-radius:9px; cursor:pointer; box-shadow:0 4px 16px rgba(2,132,199,0.4); transition:all 0.2s;">
+        Unlock AI Incubator &rarr;
       </button>
+
+      <div style="margin-top:16px; text-align:center; font-size:11px; color:#64748b;">
+        🔒 Connected to Local Workstation &amp; Ollama AI Agents
+      </div>
     </form>
   </div>
 </div>
+
 
 
 <!-- SJ Startup SplashScreen (from 7rakni) -->
@@ -8158,8 +8163,19 @@ async function checkAuthStatus() {
     const res = await fetch('/api/auth/status');
     const data = await res.json();
     const overlay = document.getElementById('auth-modal-overlay');
-    if (data.auth_enabled && !data.authenticated) {
+    const host = window.location.hostname;
+    const isRemote = host !== 'localhost' && host !== '127.0.0.1' && host !== '0.0.0.0';
+    const requireAuth = data.auth_enabled && (data.is_tunnel || isRemote || !data.authenticated);
+
+    if (requireAuth && !data.authenticated) {
       if (overlay) overlay.style.display = 'flex';
+      // Dismiss splash screen if active so Moeen can log in immediately
+      const splash = document.getElementById('sj-splash');
+      if (splash) splash.style.display = 'none';
+      setTimeout(() => {
+        const pwField = document.getElementById('auth-password');
+        if (pwField) pwField.focus();
+      }, 100);
       return false;
     } else {
       if (overlay) overlay.style.display = 'none';
@@ -8170,6 +8186,7 @@ async function checkAuthStatus() {
     return true;
   }
 }
+
 
 async function handleAuthLogin(e) {
   e.preventDefault();
