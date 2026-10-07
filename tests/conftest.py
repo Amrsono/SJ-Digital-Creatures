@@ -34,28 +34,52 @@ def server_url():
 
 
 class TestApiClient:
-    def __init__(self, base_url):
+    def __init__(self, base_url, token=None):
         self.base_url = base_url
+        self.token = token
+
+    def authenticate(self, username="moeen", password="incubator2026"):
+        status, data = self.post("/api/auth/login", {"username": username, "password": password})
+        if status == 200 and isinstance(data, dict) and data.get("token"):
+            self.token = data["token"]
+            return True
+        return False
 
     def get(self, endpoint):
         url = f"{self.base_url}{endpoint}"
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req) as response:
-            status = response.status
-            body = response.read().decode("utf-8")
+        headers = {}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+            headers["Cookie"] = f"session_token={self.token}"
+        req = urllib.request.Request(url, headers=headers, method="GET")
+        try:
+            with urllib.request.urlopen(req) as response:
+                status = response.status
+                body = response.read().decode("utf-8")
+                try:
+                    data = json.loads(body)
+                except Exception:
+                    data = body
+                return status, data
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8")
             try:
-                data = json.loads(body)
+                res_data = json.loads(body)
             except Exception:
-                data = body
-            return status, data
+                res_data = body
+            return e.code, res_data
 
     def post(self, endpoint, data=None):
         url = f"{self.base_url}{endpoint}"
         payload = json.dumps(data if data is not None else {}).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+            headers["Cookie"] = f"session_token={self.token}"
         req = urllib.request.Request(
             url,
             data=payload,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="POST"
         )
         try:
@@ -78,5 +102,13 @@ class TestApiClient:
 
 @pytest.fixture
 def api_client(server_url):
-    """Provides a TestApiClient instance configured with the test server URL."""
+    """Provides an authenticated TestApiClient instance configured with test server URL."""
+    client = TestApiClient(server_url)
+    client.authenticate()
+    return client
+
+
+@pytest.fixture
+def unauthenticated_api_client(server_url):
+    """Provides an unauthenticated TestApiClient instance."""
     return TestApiClient(server_url)

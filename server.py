@@ -9,10 +9,46 @@ import urllib.request
 import datetime
 import random
 import time
+import secrets
 from scanner import ProjectScanner
 
 PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+# ─────────────────────────────────────────────
+# Authentication & Remote Tunnel Session State
+# ─────────────────────────────────────────────
+AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "true").lower() in ("true", "1", "yes")
+VALID_USERS = {
+    os.environ.get("INCUBATOR_USER", "moeen"): os.environ.get("INCUBATOR_PASSWORD", "incubator2026"),
+    "sono": os.environ.get("SONO_PASSWORD", "incubator2026"),
+    "admin": os.environ.get("ADMIN_PASSWORD", "incubator2026")
+}
+ACTIVE_SESSIONS = {}  # token -> {"user": username, "created_at": float}
+
+def is_authenticated(handler):
+    if not AUTH_ENABLED:
+        return True, "guest"
+    
+    # 1. Check Cookie
+    cookie_hdr = handler.headers.get("Cookie", "")
+    token = None
+    if "session_token=" in cookie_hdr:
+        for part in cookie_hdr.split(";"):
+            part = part.strip()
+            if part.startswith("session_token="):
+                token = part.split("=", 1)[1]
+                break
+    
+    # 2. Check Authorization header
+    if not token:
+        auth_hdr = handler.headers.get("Authorization", "")
+        if auth_hdr.startswith("Bearer "):
+            token = auth_hdr.split(" ", 1)[1]
+            
+    if token and token in ACTIVE_SESSIONS:
+        return True, ACTIVE_SESSIONS[token]["user"]
+    return False, None
 
 scanner = ProjectScanner()
 CURRENT_PROJECT_DATA = None
@@ -22,6 +58,7 @@ CTO_DIRECTIVES_FILE = os.path.join(DIRECTORY, "cto_directives.json")
 EXCLUDED_PROJECTS_FILE = os.path.join(DIRECTORY, "excluded_projects.json")
 PORTFOLIO_STATE_FILE = os.path.join(DIRECTORY, "portfolio_state.json")
 PORTFOLIO_PROJECTS = {}
+
 
 # ─────────────────────────────────────────────
 # Interactive Meeting Session (Conversation Memory)
@@ -2586,6 +2623,22 @@ class IncubatorHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         
+        if parsed.path == "/api/auth/status":
+            auth_ok, username = is_authenticated(self)
+            self.send_json({
+                "authenticated": auth_ok,
+                "user": username,
+                "auth_enabled": AUTH_ENABLED
+            })
+            return
+
+        # Auth Guard for API endpoints
+        if parsed.path.startswith("/api/"):
+            auth_ok, username = is_authenticated(self)
+            if not auth_ok:
+                self.send_json({"error": "Unauthorized. Please log in.", "code": "UNAUTHORIZED"}, status=401)
+                return
+
         if parsed.path == "/api/project/current":
             self.send_json(CURRENT_PROJECT_DATA or {"linked": False})
             return
@@ -2686,6 +2739,39 @@ class IncubatorHandler(http.server.SimpleHTTPRequestHandler):
             payload = json.loads(post_body) if post_body else {}
         except Exception:
             payload = {}
+
+        if parsed.path == "/api/auth/login":
+            username = str(payload.get("username", "")).strip().lower()
+            password = str(payload.get("password", "")).strip()
+            if username in VALID_USERS and VALID_USERS[username] == password:
+                token = secrets.token_hex(24)
+                ACTIVE_SESSIONS[token] = {"user": username, "created_at": time.time()}
+                cookie_hdr = f"session_token={token}; Path=/; SameSite=Lax; HttpOnly"
+                self.send_json({"ok": True, "token": token, "user": username}, status=200, extra_headers={"Set-Cookie": cookie_hdr})
+            else:
+                self.send_json({"ok": False, "error": "Invalid username or password"}, status=401)
+            return
+
+        elif parsed.path == "/api/auth/logout":
+            cookie_hdr = self.headers.get("Cookie", "")
+            if "session_token=" in cookie_hdr:
+                for part in cookie_hdr.split(";"):
+                    part = part.strip()
+                    if part.startswith("session_token="):
+                        token = part.split("=", 1)[1]
+                        ACTIVE_SESSIONS.pop(token, None)
+                        break
+            clear_cookie = "session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax"
+            self.send_json({"ok": True, "message": "Logged out successfully"}, status=200, extra_headers={"Set-Cookie": clear_cookie})
+            return
+
+        # Auth Guard for API endpoints
+        if parsed.path.startswith("/api/"):
+            auth_ok, username = is_authenticated(self)
+            if not auth_ok:
+                self.send_json({"error": "Unauthorized. Please log in.", "code": "UNAUTHORIZED"}, status=401)
+                return
+
 
         if parsed.path == "/api/meeting/convene":
             tab = payload.get("tab", "planning")
@@ -3378,16 +3464,27 @@ class IncubatorHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404, "Endpoint not found")
         return
 
-    def send_json(self, data):
-        body = json.dumps(data).encode("utf-8")
+    def do_OPTIONS(self):
         self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.end_headers()
+
+    def send_json(self, data, status=200, extra_headers=None):
+        body = json.dumps(data).encode("utf-8")
+        self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
+        if extra_headers:
+            for k, v in extra_headers.items():
+                self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
 
     def log_message(self, format, *args):
+
         # Concise logging
         sys.stderr.write(f"[{self.log_date_time_string()}] {args[0]}\n")
 
