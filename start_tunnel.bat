@@ -1,9 +1,10 @@
 @echo off
-title SJ Incubator - Backend & AI Tunnel to Vercel
+title SJ Incubator - Backend & AI Remote Tunnel
 echo ===================================================
-echo   SJ Digital Creatures - Incubator Backend Tunnel
+echo   SJ Digital Creatures - Incubator Remote Tunnel
 echo ===================================================
 echo.
+
 echo [1/2] Checking local Ollama on port 11434...
 curl -s http://localhost:11434/api/tags >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
@@ -15,7 +16,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [2/2] Checking Incubator Server on port 8080...
-curl -s http://localhost:8080/api/ollama/status >nul 2>&1
+curl -s http://localhost:8080/api/auth/status >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo [!] NOTE: server.py is not running on port 8080. Starting it in a new window...
     start "SJ Incubator Server" python server.py
@@ -28,13 +29,15 @@ echo.
 echo ===================================================
 echo   Connecting Cloudflare Tunnel to port 8080...
 echo   Copy the 'https://*.trycloudflare.com' URL below!
-echo   Keep this window OPEN while testing your Vercel site.
+echo   Share that link with Moeen and keep this window OPEN.
 echo ===================================================
 echo.
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$cf = 'C:\Program Files (x86)\cloudflared\cloudflared.exe';" ^
-  "if (-not (Test-Path $cf)) { $cf = 'cloudflared' };" ^
-  "& $cf tunnel --url http://localhost:8080 --http-host-header localhost:8080"
+set "CF_PATH=C:\Program Files (x86)\cloudflared\cloudflared.exe"
+if not exist "%CF_PATH%" set "CF_PATH=cloudflared"
 
+"%CF_PATH%" tunnel --url http://localhost:8080
+
+echo.
+echo Tunnel process has ended.
 pause
