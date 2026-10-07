@@ -2668,7 +2668,16 @@
     }
 
   </style>
+  <script>
+    (function() {
+      var isRemote = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== '0.0.0.0';
+      if (isRemote && !sessionStorage.getItem('sj_authenticated')) {
+        document.write('<style>#auth-modal-overlay{display:flex!important;}#sj-splash{display:none!important;}</style>');
+      }
+    })();
+  </script>
 </head>
+
 <body>
 
 <!-- SJ Incubator Remote Authentication Modal -->
@@ -8159,34 +8168,42 @@ async function clearMeetingSession() {
 
 <script>
 async function checkAuthStatus() {
-  try {
-    const res = await fetch('/api/auth/status');
-    const data = await res.json();
-    const overlay = document.getElementById('auth-modal-overlay');
-    const host = window.location.hostname;
-    const isRemote = host !== 'localhost' && host !== '127.0.0.1' && host !== '0.0.0.0';
-    const requireAuth = data.auth_enabled && (data.is_tunnel || isRemote || !data.authenticated);
+  const host = window.location.hostname;
+  const isRemote = host !== 'localhost' && host !== '127.0.0.1' && host !== '0.0.0.0';
+  const overlay = document.getElementById('auth-modal-overlay');
 
-    if (requireAuth && !data.authenticated) {
+  try {
+    const res = await fetch('/api/auth/status', {
+      headers: { 'X-Tunnel-Client': isRemote ? '1' : '0' }
+    });
+    const data = await res.json();
+    const needsAuth = isRemote || data.is_tunnel;
+
+    if (needsAuth && !data.authenticated) {
+      sessionStorage.removeItem('sj_authenticated');
       if (overlay) overlay.style.display = 'flex';
-      // Dismiss splash screen if active so Moeen can log in immediately
       const splash = document.getElementById('sj-splash');
       if (splash) splash.style.display = 'none';
       setTimeout(() => {
         const pwField = document.getElementById('auth-password');
         if (pwField) pwField.focus();
-      }, 100);
+      }, 50);
       return false;
     } else {
+      if (data.authenticated) {
+        sessionStorage.setItem('sj_authenticated', 'true');
+      }
       if (overlay) overlay.style.display = 'none';
       return true;
     }
   } catch (e) {
     console.error('Auth check status failed:', e);
-    return true;
+    if (isRemote && !sessionStorage.getItem('sj_authenticated')) {
+      if (overlay) overlay.style.display = 'flex';
+    }
+    return false;
   }
 }
-
 
 async function handleAuthLogin(e) {
   e.preventDefault();
@@ -8207,6 +8224,8 @@ async function handleAuthLogin(e) {
     });
     const data = await res.json();
     if (res.ok && data.ok) {
+      sessionStorage.setItem('sj_authenticated', 'true');
+      if (data.token) localStorage.setItem('incubator_token', data.token);
       document.getElementById('auth-modal-overlay').style.display = 'none';
       location.reload();
     } else {
@@ -8218,16 +8237,19 @@ async function handleAuthLogin(e) {
     errDiv.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.innerText = 'Log In to Incubator \u2192';
+    btn.innerText = 'Unlock AI Incubator \u2192';
   }
 }
 
 async function handleAuthLogout() {
+  sessionStorage.removeItem('sj_authenticated');
+  localStorage.removeItem('incubator_token');
   await fetch('/api/auth/logout', { method: 'POST' });
   location.reload();
 }
 
 window.addEventListener('DOMContentLoaded', checkAuthStatus);
+
 </script>
 
 </body>

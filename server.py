@@ -28,9 +28,18 @@ ACTIVE_SESSIONS = {}  # token -> {"user": username, "created_at": float}
 
 def is_tunnel_connection(handler):
     host = handler.headers.get("Host", "").lower().split(":")[0]
-    is_cf = bool(handler.headers.get("Cf-Ray") or handler.headers.get("Cf-Connecting-Ip") or "trycloudflare.com" in host or "cloudflare" in host)
+    is_cf = bool(
+        handler.headers.get("Cf-Ray") or 
+        handler.headers.get("Cf-Connecting-Ip") or 
+        handler.headers.get("X-Forwarded-For") or 
+        handler.headers.get("X-Forwarded-Proto") or 
+        handler.headers.get("X-Tunnel-Client") == "1" or
+        "trycloudflare.com" in host or 
+        "cloudflare" in host
+    )
     is_remote_host = host not in ("localhost", "127.0.0.1", "0.0.0.0", "::1", "")
     return is_cf or is_remote_host
+
 
 def is_authenticated(handler):
     if not AUTH_ENABLED:
