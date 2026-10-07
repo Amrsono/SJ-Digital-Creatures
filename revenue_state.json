@@ -15,7 +15,7 @@
       "external_saas_url": "https://fcf-mosaam.vercel.app/",
       "external_counter_api": "https://fcf-mosaam.vercel.app/api/orders",
       "external_counter": 6102,
-      "last_sync_time": "2026-10-05 12:37:03",
+      "last_sync_time": "2026-10-07 10:17:03",
       "today_tx": 0,
       "monthly_tx": 0
     },
@@ -164,165 +164,165 @@
       "date": "2026-09-22",
       "time": "2026-09-22 11:59",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 450.0,
       "net_revenue_egp": 1.0,
       "customer": "+201064152713",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-9340",
       "date": "2026-09-22",
       "time": "2026-09-22 11:58",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 270.0,
       "net_revenue_egp": 1.0,
       "customer": "+201063510160",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-0889",
       "date": "2026-09-22",
       "time": "2026-09-22 11:57",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 341.29,
       "net_revenue_egp": 1.0,
       "customer": "+201115339030",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-7243",
       "date": "2026-09-22",
       "time": "2026-09-22 11:57",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 1169.0,
       "net_revenue_egp": 1.0,
       "customer": "+201015543991",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-5528",
       "date": "2026-09-22",
       "time": "2026-09-22 11:56",
       "project": "FCF MOSAAM",
-      "unit": "Order",
-      "gross_egp": 1.0,
+      "unit": "Order \u2014 tegara (JumiaPay)",
+      "gross_egp": 0.0,
       "net_revenue_egp": 1.0,
       "customer": "+201205937667",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-5134",
       "date": "2026-09-22",
       "time": "2026-09-22 11:56",
       "project": "FCF MOSAAM",
-      "unit": "Order",
-      "gross_egp": 1.0,
+      "unit": "Order \u2014 tegara (Cash)",
+      "gross_egp": 0.0,
       "net_revenue_egp": 1.0,
       "customer": "+201039208808",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-7550",
       "date": "2026-09-22",
       "time": "2026-09-22 11:55",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 222.05,
       "net_revenue_egp": 1.0,
       "customer": "+201096240280",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-7152",
       "date": "2026-09-22",
       "time": "2026-09-22 11:54",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 589.99,
       "net_revenue_egp": 1.0,
       "customer": "+201094096306",
-      "status": "Status: Picked Up"
+      "status": "Picked Up via tegara"
     },
     {
       "id": "TX-3111",
       "date": "2026-09-22",
       "time": "2026-09-22 11:53",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 386.99,
       "net_revenue_egp": 1.0,
       "customer": "+201027086125",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-0739",
       "date": "2026-09-22",
       "time": "2026-09-22 11:52",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 827.2,
       "net_revenue_egp": 1.0,
       "customer": "+201024855778",
-      "status": "Status: Picked Up"
+      "status": "Picked Up via tegara"
     },
     {
       "id": "TX-0194",
       "date": "2026-09-22",
       "time": "2026-09-22 11:51",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 537.9,
       "net_revenue_egp": 1.0,
       "customer": "+201098323397",
-      "status": "Status: Picked Up"
+      "status": "Picked Up via tegara"
     },
     {
       "id": "TX-5661",
       "date": "2026-09-22",
       "time": "2026-09-22 11:51",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 952.0,
       "net_revenue_egp": 1.0,
       "customer": "+201115339030",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-3794",
       "date": "2026-09-22",
       "time": "2026-09-22 11:47",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 256.99,
       "net_revenue_egp": 1.0,
       "customer": "+201063282890",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-4233",
       "date": "2026-09-22",
       "time": "2026-09-22 11:46",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 430.0,
       "net_revenue_egp": 1.0,
       "customer": "+201063510160",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     },
     {
       "id": "TX-4278",
       "date": "2026-09-22",
       "time": "2026-09-22 11:43",
       "project": "FCF MOSAAM",
-      "unit": "Order",
+      "unit": "Order \u2014 tegara (Cash)",
       "gross_egp": 18470.0,
       "net_revenue_egp": 1.0,
       "customer": "+201002864646",
-      "status": "Status: Inventory"
+      "status": "Inventory via tegara"
     }
   ]
 }

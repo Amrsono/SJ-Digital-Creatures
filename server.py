@@ -2326,32 +2326,43 @@ def poll_external_saas_counters():
         
         if api_url:
             try:
-                req = urllib.request.Request(api_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+                req = urllib.request.Request(api_url, headers={
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                                "Accept": "application/json, text/plain, */*",
+                                "Accept-Language": "en-US,en;q=0.9",
+                                "Referer": api_url.split("/api/")[0] + "/",
+                                "Origin": api_url.split("/api/")[0],
+                                "Cache-Control": "no-cache",
+                                "Connection": "keep-alive",
+                            })
                 with urllib.request.urlopen(req, timeout=10) as r:
                     if r.status == 200:
                         raw = r.read().decode("utf-8")
                         data = json.loads(raw)
                         if isinstance(data, list):
+                            # Count all non-deleted orders — cancelled still = EGP 1 (work was done)
                             valid_orders = [o for o in data if not o.get("isDeleted")]
                             alltime_cnt = len(valid_orders)
                             month_cnt = sum(1 for o in valid_orders if (o.get("receivedAt") or o.get("createdAt") or "").startswith(month_str))
                             today_cnt = sum(1 for o in valid_orders if (o.get("receivedAt") or o.get("createdAt") or "").startswith(today_str))
-                            
-                            p["external_counter"] = alltime_cnt
-                            p["total_tx"] = alltime_cnt
+
+                            p["external_counter"]  = alltime_cnt
+                            p["total_tx"]          = alltime_cnt
                             p["total_revenue_egp"] = round(alltime_cnt * net_per_tx, 2)
-                            p["last_sync_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            p["today_tx"] = today_cnt
-                            p["monthly_tx"] = month_cnt
-                            
-                            total_daily_tx += today_cnt
-                            total_daily_rev += round(today_cnt * net_per_tx, 2)
-                            total_monthly_tx += month_cnt
+                            p["last_sync_time"]    = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            p["today_tx"]          = today_cnt
+                            p["monthly_tx"]        = month_cnt
+
+                            total_daily_tx    += today_cnt
+                            total_daily_rev   += round(today_cnt * net_per_tx, 2)
+                            total_monthly_tx  += month_cnt
                             total_monthly_rev += round(month_cnt * net_per_tx, 2)
-                            total_alltime_tx += alltime_cnt
+                            total_alltime_tx  += alltime_cnt
                             total_alltime_rev += round(alltime_cnt * net_per_tx, 2)
-                            
-                            # Populate sample recent transactions for ticker UI if needed
+
+                            sys.stderr.write(f"[SaaSPoller] {pname}: {alltime_cnt} orders synced. Revenue = EGP {alltime_cnt * net_per_tx:.2f}\n")
+
+                            # Ticker — show most recent orders with source & payment method
                             if valid_orders:
                                 recent_samples = []
                                 for o in valid_orders[:15]:
@@ -2365,20 +2376,26 @@ def poll_external_saas_counters():
                                         rec_date = now_dt.strftime("%Y-%m-%d")
                                         rec_time = now_dt.strftime("%Y-%m-%d %H:%M")
 
-                                    cust = o.get("customerName") or o.get("customerPhone") or f"Order #{o.get('id','').split('-')[-1]}"
+                                    source = o.get("outlet") or o.get("source") or "Direct"
+                                    pay    = o.get("paymentMethod") or ""
+                                    status_label = o.get("status", "Completed")
+                                    cust = o.get("customerName") or o.get("customerPhone") or f"Order #{o.get('id','???').split('-')[-1]}"
+                                    # Sanitise absurd totalValues caused by data-entry errors
+                                    raw_val = float(o.get("totalValue") or 0)
+                                    gross = raw_val if raw_val < 1_000_000 else 0.0
                                     recent_samples.append({
                                         "id": f"TX-{o.get('id','').split('-')[-1] or random.randint(1000,9999)}",
                                         "date": rec_date,
                                         "time": rec_time,
                                         "project": pname,
-                                        "unit": f"{p.get('unit_name','Order')}",
-                                        "gross_egp": float(o.get("totalValue") or net_per_tx),
+                                        "unit": f"{p.get('unit_name','Order')} — {source} ({pay})",
+                                        "gross_egp": gross,
                                         "net_revenue_egp": net_per_tx,
                                         "customer": cust,
-                                        "status": f"Status: {o.get('status','Completed')}"
+                                        "status": f"{status_label} via {source}"
                                     })
                                 state["recent_transactions"] = recent_samples
-                            
+
                             changed = True
                         elif isinstance(data, dict):
                             cnt = data.get("count") or data.get("total") or data.get("total_tx") or len(data.get("orders", []))
@@ -2392,6 +2409,7 @@ def poll_external_saas_counters():
                                 changed = True
             except Exception as e:
                 sys.stderr.write(f"[SaaSPoller] Auto-sync error for {pname} via {api_url}: {e}\n")
+
         else:
             p_alltime = p.get("total_tx", 0)
             p_month = p.get("monthly_tx", p_alltime)
@@ -3374,8 +3392,38 @@ class IncubatorHandler(http.server.SimpleHTTPRequestHandler):
         sys.stderr.write(f"[{self.log_date_time_string()}] {args[0]}\n")
 
 if __name__ == "__main__":
+    import socket
     start_autonomous_engine()
     socketserver.TCPServer.allow_reuse_address = True
+    
+    local_ip = "localhost"
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        pass
+
+    tailscale_ip = None
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None):
+            ip = info[4][0]
+            if ip.startswith("100."):
+                tailscale_ip = ip
+                break
+    except Exception:
+        pass
+
     with socketserver.TCPServer(("", PORT), IncubatorHandler) as httpd:
-        print(f"SJ Digital Creatures Server listening on http://localhost:{PORT}")
+        print("=" * 65)
+        print("   SJ DIGITAL CREATURES - INCUBATOR SERVER ACTIVE")
+        print("=" * 65)
+        print(f"  Local PC:          http://localhost:{PORT}")
+        print(f"  Home Wi-Fi:        http://{local_ip}:{PORT}")
+        if tailscale_ip:
+            print(f"  Everywhere / 5G:   http://{tailscale_ip}:{PORT}")
+            print(f"  MagicDNS:          http://sono-pc:{PORT}")
+        print("=" * 65)
+        print("  * For access everywhere, connect Tailscale on your tablet.")
         httpd.serve_forever()

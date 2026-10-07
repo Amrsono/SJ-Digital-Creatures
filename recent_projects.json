@@ -1,5 +1,10 @@
 [
   {
+    "name": "ai-incubator",
+    "path": "D:\\github repos\\Sj\\ai-incubator",
+    "scanned_at": 1791208698.236743
+  },
+  {
     "name": "clouds",
     "path": "D:\\github repos\\Horus-main",
     "scanned_at": 1789672411.7380302
@@ -33,10 +38,5 @@
     "name": "7rakni AI Studio",
     "path": "D:\\github repos\\7rakni",
     "scanned_at": 1788995024.875049
-  },
-  {
-    "name": "ComplyArc",
-    "path": "D:\\github repos\\ComplyArc",
-    "scanned_at": 1787225048.8122015
   }
 ]
