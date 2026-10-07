@@ -1,5 +1,5 @@
 @echo off
-title SJ Incubator - Backend & AI Remote Tunnel
+title SJ Incubator - Remote Tunnel
 echo ===================================================
 echo   SJ Digital Creatures - Incubator Remote Tunnel
 echo ===================================================
@@ -7,7 +7,7 @@ echo.
 
 echo [1/2] Checking local Ollama on port 11434...
 curl -s http://localhost:11434/api/tags >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
+if errorlevel 1 (
     echo [!] WARNING: Ollama is not responding on port 11434.
     echo     Please make sure Ollama is running so AI agents can respond.
     echo.
@@ -17,12 +17,12 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [2/2] Checking Incubator Server on port 8080...
 curl -s http://localhost:8080/api/auth/status >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo [!] NOTE: server.py is not running on port 8080. Starting it in a new window...
+if errorlevel 1 (
+    echo [!] NOTE: server.py is not running on port 8080. Starting server...
     start "SJ Incubator Server" python server.py
     timeout /t 3 /nobreak >nul
 ) else (
-    echo [OK] Incubator Server (server.py) is active on port 8080.
+    echo [OK] Incubator Server is active on port 8080.
 )
 
 echo.
